@@ -9,9 +9,7 @@ import base64
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024  # 1 MB limit for uploaded files
 UPLOAD_FOLDER = './uploads'  # папка для загруженных файлов
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER    
 # Image resizing endpoint
 @app.route('/contrast', methods=['POST'])
 def contrast():
@@ -27,6 +25,7 @@ def contrast():
     if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
         abort(400, 'File is not an image')
 
+    # Verify the captcha
     
 
     
@@ -83,10 +82,7 @@ def contrast():
 def index():
     return render_template('index.html')
 
-# Error handler
-@app.errorhandler(400)
-def bad_request(error):
-    return render_template('result.html', message=str(error)), 400
+
 
 # Utility function to get color distribution of an image
 def get_color_distribution(img):
