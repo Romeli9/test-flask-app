@@ -33,7 +33,7 @@ def contrast():
     if not recaptcha_response:
         abort(400, 'reCAPTCHA verification failed')
     payload = {
-        'secret': '6LfghbElAAAAANWAo6yEBSqTYGNs5hVjpjaUM1RL',  # Replace this with your actual reCAPTCHA secret key
+        'secret': '6LfghbElAAAAANWAo6yEBSqTYGNs5hVjpjaUM1RL',
         'response': recaptcha_response
     }
     response = requests.post('https://www.google.com/recaptcha/api/siteverify', payload).json()
