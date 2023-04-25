@@ -9,7 +9,9 @@ import base64
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024  # 1 MB limit for uploaded files
 UPLOAD_FOLDER = './uploads'  # папка для загруженных файлов
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER    
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER 
+RECAPTCHA_SITE_KEY = '6LfghbElAAAAAPNUlmGE4m2HdL7U3eCmEIJFqpIj'   
+
 # Image resizing endpoint
 @app.route('/contrast', methods=['POST'])
 def contrast():
@@ -24,11 +26,18 @@ def contrast():
     # Check if the uploaded file is an image
     if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
         abort(400, 'File is not an image')
-
     # Verify the captcha
-    
+    recaptcha_response = request.form.get('g-recaptcha-response')
+    if not recaptcha_response:
+        abort(400, 'reCAPTCHA verification failed')
+    payload = {
+        'secret': '6LfghbElAAAAANWAo6yEBSqTYGNs5hVjpjaUM1RL',
+        'response': recaptcha_response
+    }
+    response = requests.post('https://www.google.com/recaptcha/api/siteverify', payload).json()
+    if not response['success']:
+        abort(400, 'reCAPTCHA verification failed')
 
-    
     # Load the image and apply contrast enhancement
     img = Image.open(file)
     contrasted_img = ImageEnhance.Contrast(img).enhance(contrast)
@@ -42,31 +51,24 @@ def contrast():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
     fig.suptitle('Color Distribution')
     ax1.bar(np.arange(len(orig_colors)), [c[0]/255 for c in orig_colors], color=[tuple(np.array(c[1])/255) for c in orig_colors])
-
     ax1.set_xticks(np.arange(len(orig_colors)))
     ax1.set_xticklabels([c[1] for c in orig_colors], rotation=45)
     ax1.set_title('Original Image')
-
     ax2.bar(np.arange(len(contrasted_colors)), [c[0]/255 for c in contrasted_colors], color=[tuple(np.array(c[1])/255) for c in contrasted_colors])
     ax2.set_xticks(np.arange(len(contrasted_colors)))
     ax2.set_xticklabels([c[1] for c in contrasted_colors], rotation=45)
     ax2.set_title('Contrasted Image')
     plt.tight_layout()
-
     # Save the plot to a file
     plot_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'plot.png')
     plt.savefig(plot_filename)
-
     # Save the contrasted image to a file
     contrasted_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'contrasted.png')
     contrasted_img.save(contrasted_filename)  
-    
     orig_filename = os.path.join(app.config['UPLOAD_FOLDER'],'orig.png')
     img.save(orig_filename)
-
     # Render the result page
     result_filename = os.path.basename(plot_filename) # get just the filename from the path
-
     # Open the plot image as a binary file
     with open(plot_filename, 'rb') as f:
         plot_bytes = f.read()
@@ -82,8 +84,6 @@ def contrast():
 def index():
     return render_template('index.html')
 
-
-
 # Utility function to get color distribution of an image
 def get_color_distribution(img):
     colors = img.getcolors(img.size[0] * img.size[1])
@@ -97,4 +97,4 @@ def uploaded_file(filename):
 if __name__ == '__main__':
     app.config['UPLOAD_FOLDER'] = 'uploads'
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+    app.run(debug=True)
