@@ -23,4 +23,4 @@ jobs: # список работ, которые будут производит�
       # Запуск Unicorn
    - name: Run Unicorn
      run: |
-          pipenv run gunicorn app:app
+          pipenv run gunicorn app:app.py
