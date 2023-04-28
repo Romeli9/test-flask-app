@@ -1,5 +1,5 @@
 env
-gunicorn --bind 127.0.0.1:5000 wsgi:app & APP_PID=$!
+gunicorn --bind 127.0.0.1:5000 app:app & APP_PID=$!
 sleep 5
 echo start app
 python3 app.py
